@@ -18,7 +18,16 @@ type UsersBook struct {
 }
 
 type BooksComment struct {
-	ID          int
-	BookId      int
-	UserComment int
+	ID        int
+	BookId    int
+	CommentId int
+}
+
+type UpdateBookInput struct {
+	Name   *string `json:"name"`
+	Author *string `json:"author"`
+}
+
+type UpdateCommentInput struct {
+	Message *string `json:"message"`
 }
