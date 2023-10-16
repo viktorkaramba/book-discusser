@@ -1,13 +1,12 @@
-package repository
+package service
 
 import (
 	"book-discusser/pkg/models"
-	"database/sql"
+	"book-discusser/pkg/repository"
 )
 
 type Authorization interface {
 	CreateUser(user models.User) (int, error)
-	GetUser(email, password string) (*models.User, error)
 }
 
 type Book interface {
@@ -26,16 +25,16 @@ type Comment interface {
 	Update(commentId int, input models.UpdateCommentInput) error
 }
 
-type Repository struct {
+type Service struct {
 	Authorization
 	Book
 	Comment
 }
 
-func NewRepository(db *sql.DB) *Repository {
-	return &Repository{
-		Authorization: NewAuthPostgres(db),
-		Book:          NewBookPostgres(db),
-		Comment:       NewCommentPostgres(db),
+func NewService(repos *repository.Repository) *Service {
+	return &Service{
+		Authorization: NewAuthService(repos.Authorization),
+		Book:          NewBookService(repos.Book),
+		Comment:       NewCommentService(repos.Comment),
 	}
 }

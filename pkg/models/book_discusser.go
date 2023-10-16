@@ -1,5 +1,7 @@
 package models
 
+import "errors"
+
 type Book struct {
 	ID     int    `json:"id" db:"id"`
 	Name   string `json:"name" db:"name"`
@@ -28,6 +30,21 @@ type UpdateBookInput struct {
 	Author *string `json:"author"`
 }
 
+func (i UpdateBookInput) Validate() error {
+	if i.Name == nil && i.Author == nil {
+		return errors.New("update structure has no values")
+	}
+
+	return nil
+}
+
 type UpdateCommentInput struct {
 	Message *string `json:"message"`
+}
+
+func (i UpdateCommentInput) Validate() error {
+	if i.Message == nil {
+		return errors.New("update structure has no values")
+	}
+	return nil
 }
