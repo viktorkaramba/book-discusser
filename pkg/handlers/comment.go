@@ -15,13 +15,7 @@ func (h *Handler) createComment(c *gin.Context) {
 		return
 	}
 
-	bookId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
-		return
-	}
-
-	id, err := h.services.Comment.Create(bookId, input)
+	id, err := h.services.Comment.Create(input.ID, input)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -57,13 +51,16 @@ func (h *Handler) getCommentByBookId(c *gin.Context) {
 		return
 	}
 
-	books, err := h.services.Comment.GetByBookId(id)
+	comments, err := h.services.Comment.GetByBookId(id)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, books)
+	c.HTML(http.StatusOK, "comment.html", gin.H{
+		"title":    "Book Comments",
+		"comments": comments,
+	})
 }
 
 func (h *Handler) updateComment(c *gin.Context) {

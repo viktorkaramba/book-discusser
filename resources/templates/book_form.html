@@ -1,0 +1,84 @@
+<div class="bg-img">
+{{ template "header.html" .}}
+  <div class="container book_list">
+  <h1 style="text-align:center;">
+    BookDiscusser
+  </h1>
+  <form method="dialog">
+    <div class="form-group m-2">
+      <label>Enter Book Name:</label>
+      <input class="form-control"
+             type="text"
+             name="name"
+             id="name"
+             placeholder="Input Book Name Here">
+    </div>
+    <div class="form-group">
+      <label>Enter Author:</label>
+      <input class="form-control"
+             type="text"
+             name="author"
+             id="author"
+             placeholder="Input Author Here">
+    </div>
+    <div class="form-group">
+      <label>Enter Message:</label>
+      <input class="form-control"
+             type="text"
+             name="message"
+             id="message"
+             placeholder="Input Message Here">
+    </div>
+    <div class="form-group">
+      <input type="file" name="imageBook", id="imageBook">
+      <img id="preview" src="#" alt="Image preview" style="max-width: 300px; max-height: 300px;"/>
+      <script>
+        var imageBookBytes
+        document.getElementById('imageBook').addEventListener('change', function() {
+          var file = this.files[0];
+          var reader = new FileReader();
+
+          reader.onload = function(e) {
+            var arrayBuffer = e.target.result;
+            // imageBookBytes = e.target.result;
+            imageBookBytes = new Uint8Array(arrayBuffer);
+            console.log("Масив байт зображення: ", imageBookBytes);
+          };
+          reader.readAsArrayBuffer(file);
+        });
+
+        function sendData() {
+          var name = document.getElementById('name').value;
+          var author = document.getElementById('author').value;
+          var message = document.getElementById('message').value;
+          console.log(imageBookBytes)
+          var base64String = btoa(String.fromCharCode.apply(null, new Uint8Array(imageBookBytes)));
+          var data = { name: name, author: author, message: message, imageBook: base64String };
+
+          console.log(data)
+          fetch('http://localhost:8080/api/books', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          })
+                  .then(response => response.json())
+                  .then(data => {
+                    location.replace("http://localhost:8080/api/books")
+                    console.log('Success:', data);
+                  })
+                  .catch((error) => {
+                    console.error('Error:', error);
+                  })
+        }
+      </script>
+    </div>
+    <div class="form-group">
+      <button class="btn btn-success btn-lg float-right" onclick="sendData()">
+        Submit
+      </button>
+    </div>
+  </form>
+</div>
+</div>

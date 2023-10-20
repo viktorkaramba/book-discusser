@@ -3,14 +3,18 @@ package service
 import (
 	"book-discusser/pkg/models"
 	"book-discusser/pkg/repository"
+	"book-discusser/pkg/sessions"
 )
 
 type Authorization interface {
 	CreateUser(user models.User) (int, error)
+	GenerateSessionToken(userId int, email, password string) (*sessions.Session, error)
+	GetSession(sessionId string) (*sessions.Session, error)
+	DeleteSession(sessionId string) error
 }
 
 type Book interface {
-	Create(userId int, book models.Book) (int, error)
+	Create(userId int, userBookComment models.UserCreateBook) (int, error)
 	GetAll() ([]models.Book, error)
 	GetByUserId(userId int) ([]models.Book, error)
 	Delete(bookId int) error
@@ -33,8 +37,8 @@ type Service struct {
 
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		Authorization: NewAuthService(repos.Authorization),
-		Book:          NewBookService(repos.Book),
+		Authorization: NewAuthService(repos.Authorization, repos.Session),
+		Book:          NewBookService(repos.Book, repos.Comment),
 		Comment:       NewCommentService(repos.Comment),
 	}
 }

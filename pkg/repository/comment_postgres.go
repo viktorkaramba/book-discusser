@@ -23,7 +23,7 @@ func (c *CommentPostgres) Create(bookId int, comment models.Comment) (int, error
 	}
 
 	var commentId int
-	createCommentQuery := fmt.Sprintf("INSERT INTO %s message values ($1) RETURNING id", commentsTable)
+	createCommentQuery := fmt.Sprintf("INSERT INTO %s (message) values ($1) RETURNING id", commentsTable)
 
 	row := tx.QueryRow(createCommentQuery, comment.Message)
 	err = row.Scan(&commentId)

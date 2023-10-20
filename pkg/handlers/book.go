@@ -8,18 +8,18 @@ import (
 )
 
 func (h *Handler) createBook(c *gin.Context) {
-	userId, err := getUserId(c)
+	cookie, err := c.Cookie("userId")
+	userId, err := strconv.Atoi(cookie)
 	if err != nil {
-		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	var input models.Book
+	var input models.UserCreateBook
 	if err := c.BindJSON(&input); err != nil {
-		//newErrorResponse(c, http.StatusBadRequest, err.Error())
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	id, err := h.services.Book.Create(userId, input)
 	if err != nil {
 		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -31,32 +31,30 @@ func (h *Handler) createBook(c *gin.Context) {
 	})
 }
 
-type getAllBooksResponse struct {
-	Data []models.Book `json:"data"`
-}
-
 func (h *Handler) getAllBooks(c *gin.Context) {
-	lists, err := h.services.Book.GetAll()
+	books, err := h.services.Book.GetAll()
 	if err != nil {
-		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, getAllBooksResponse{
-		Data: lists,
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"title":   "Home Page",
+		"payload": books,
 	})
 }
 
 func (h *Handler) getBookByUserId(c *gin.Context) {
-	userId, err := getUserId(c)
+	cookie, err := c.Cookie("userId")
+	userId, err := strconv.Atoi(cookie)
 	if err != nil {
-		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	books, err := h.services.Book.GetByUserId(userId)
 	if err != nil {
-		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 

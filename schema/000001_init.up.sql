@@ -10,7 +10,8 @@ CREATE TABLE books
 (
     id     serial       not null unique,
     name   varchar(255) not null,
-    author varchar(255)
+    author varchar(255) not null,
+    imageBook varchar(1024) not null
 );
 
 CREATE TABLE users_books
