@@ -1,84 +1,93 @@
 <div class="bg-img">
+  <div class="main-flex-container">
 {{ template "header.html" .}}
-  <div class="container book_list">
-  <h1 style="text-align:center;">
-    BookDiscusser
-  </h1>
-  <form method="dialog">
-    <div class="form-group m-2">
-      <label>Enter Book Name:</label>
-      <input class="form-control"
-             type="text"
-             name="name"
-             id="name"
-             placeholder="Input Book Name Here">
-    </div>
-    <div class="form-group">
-      <label>Enter Author:</label>
-      <input class="form-control"
-             type="text"
-             name="author"
-             id="author"
-             placeholder="Input Author Here">
-    </div>
-    <div class="form-group">
-      <label>Enter Message:</label>
-      <input class="form-control"
-             type="text"
-             name="message"
-             id="message"
-             placeholder="Input Message Here">
-    </div>
-    <div class="form-group">
-      <input type="file" name="imageBook", id="imageBook">
-      <img id="preview" src="#" alt="Image preview" style="max-width: 300px; max-height: 300px;"/>
-      <script>
-        var imageBookBytes
-        document.getElementById('imageBook').addEventListener('change', function() {
-          var file = this.files[0];
-          var reader = new FileReader();
+    <div class="my_main" style="overflow-y: auto">
+    <div class="container book-list" style="color: #222222; ">
+    <form method="dialog">
+      <div class="form-group">
+        <label>Enter Book Name:</label>
+        <input class="form-control"
+               type="text"
+               name="name"
+               id="name"
+               placeholder="Input Book Name Here">
+      </div>
+      <div class="form-group">
+        <label>Enter Author:</label>
+        <input class="form-control"
+               type="text"
+               name="author"
+               id="author"
+               placeholder="Input Author Here">
+      </div>
+      <div class="form-group">
+        <label>Enter Description:</label>
+        <textarea
+                class="form-control"
+               name="description"
+               id="description"
+               rows="3"
+               cols="50">
+          </textarea>
+      </div>
+      <div class="form-group">
+        <label>Enter Message:</label>
+        <textarea
+                class="form-control"
+                name="message"
+                id="message"
+                rows="4"
+                cols="50">
+          </textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; ">
+        <div class="form-group" style="margin: 0">
+          <label>Enter New Image Link:</label>
+          <input class="form-control"
+                 type="text"
+                 name="imageLink"
+                 id="imageLink"
+                 placeholder="Input Image Link Here">
 
-          reader.onload = function(e) {
-            var arrayBuffer = e.target.result;
-            // imageBookBytes = e.target.result;
-            imageBookBytes = new Uint8Array(arrayBuffer);
-            console.log("Масив байт зображення: ", imageBookBytes);
-          };
-          reader.readAsArrayBuffer(file);
-        });
-
-        function sendData() {
-          var name = document.getElementById('name').value;
-          var author = document.getElementById('author').value;
-          var message = document.getElementById('message').value;
-          console.log(imageBookBytes)
-          var base64String = btoa(String.fromCharCode.apply(null, new Uint8Array(imageBookBytes)));
-          var data = { name: name, author: author, message: message, imageBook: base64String };
-
-          console.log(data)
-          fetch('http://localhost:8080/api/books', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          })
-                  .then(response => response.json())
-                  .then(data => {
-                    location.replace("http://localhost:8080/api/books")
-                    console.log('Success:', data);
-                  })
-                  .catch((error) => {
-                    console.error('Error:', error);
-                  })
-        }
-      </script>
-    </div>
-    <div class="form-group">
-      <button class="btn btn-success btn-lg float-right" onclick="sendData()">
-        Submit
-      </button>
-    </div>
-  </form>
+        </div>
+        <div class="form-group"  style="margin: 10px 0 0 0">
+          <button class="btn btn-dark btn-m float-right" onclick="sendData()">
+            Add Book
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
+  </div>
+  {{ template "footer.html" .}}
 </div>
+<script>
+  function sendData() {
+    const name = document.getElementById('name').value;
+    const author = document.getElementById('author').value;
+    const description = document.getElementById('description').value;
+    const message = document.getElementById('message').value;
+    const image = document.getElementById('imageLink').value;
+    const data = {name: name, author: author, description: description, message: message, imageBook: image};
+    fetch('http://localhost:8080/api/books', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+            .then(data => {
+              if(data.status === 401){
+                location.replace("http://localhost:8080/auth/view/login")
+              }
+              else if (data.status === 200){
+                location.replace("http://localhost:8080/api/books")
+                console.log('Success:', data);
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+  }
+</script>

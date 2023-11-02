@@ -3,11 +3,8 @@ package service
 import (
 	"book-discusser/pkg/models"
 	"book-discusser/pkg/repository"
-	"book-discusser/pkg/sessions"
 	"crypto/sha1"
 	"fmt"
-	"github.com/google/uuid"
-	"time"
 )
 
 const (
@@ -15,12 +12,11 @@ const (
 )
 
 type AuthService struct {
-	repoAuth    repository.Authorization
-	repoSession repository.Session
+	repoAuth repository.Authorization
 }
 
-func NewAuthService(repoAuth repository.Authorization, repoSession repository.Session) *AuthService {
-	return &AuthService{repoAuth: repoAuth, repoSession: repoSession}
+func NewAuthService(repoAuth repository.Authorization) *AuthService {
+	return &AuthService{repoAuth: repoAuth}
 }
 
 func (s *AuthService) CreateUser(user models.User) (int, error) {
@@ -28,31 +24,16 @@ func (s *AuthService) CreateUser(user models.User) (int, error) {
 	return s.repoAuth.CreateUser(user)
 }
 
-func (s *AuthService) GenerateSessionToken(userId int, email, password string) (*sessions.Session, error) {
-	_, err := s.repoAuth.GetUser(email, generatePasswordHash(password))
-	if err != nil {
-		return nil, err
-	}
-	sessionToken := uuid.NewString()
-	newSession := sessions.Session{
-		ID:     sessionToken,
-		UserId: userId,
-		Email:  email,
-		Expiry: time.Now().Add(sessions.ExpireTime),
-	}
-	_, err = s.repoSession.CreateSession(newSession)
-	if err != nil {
-		return nil, err
-	}
-	return &newSession, nil
+func (s *AuthService) GetUser(email, password string) (*models.User, error) {
+	return s.repoAuth.GetUser(email, generatePasswordHash(password))
 }
 
-func (s *AuthService) GetSession(sessionId string) (*sessions.Session, error) {
-	return s.repoSession.GetSession(sessionId)
+func (s *AuthService) GetUserById(userId int) (*models.User, error) {
+	return s.repoAuth.GetUserById(userId)
 }
 
-func (s *AuthService) DeleteSession(sessionId string) error {
-	return s.repoSession.Delete(sessionId)
+func (s *AuthService) GetUserByEmail(email string) (*models.User, error) {
+	return s.repoAuth.GetUserByEmail(email)
 }
 
 func generatePasswordHash(password string) string {

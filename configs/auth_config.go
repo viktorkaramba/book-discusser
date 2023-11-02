@@ -3,6 +3,7 @@ package configs
 import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"os"
 )
 
 type Config struct {
@@ -16,8 +17,8 @@ const OauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_
 func LoadConfig() {
 	// Oauth configuration for Google
 	AppConfig.GoogleLoginConfig = oauth2.Config{
-		ClientID:     "73653467917-vdn1egbp4pbchd5d1pgqtaqqljnuebhe.apps.googleusercontent.com",
-		ClientSecret: "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",
+		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		Endpoint:     google.Endpoint,
 		RedirectURL:  "http://localhost:8080/auth/google_callback",
 		Scopes: []string{

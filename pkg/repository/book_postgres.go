@@ -23,9 +23,9 @@ func (b *BookPostgres) Create(userId int, book models.Book) (int, error) {
 	}
 
 	var bookId int
-	createBookQuery := fmt.Sprintf("INSERT INTO %s (name, Author, imagebook) values ($1, $2, $3) RETURNING id", booksTable)
+	createBookQuery := fmt.Sprintf("INSERT INTO %s (name, Author, description, imagebook) values ($1, $2, $3, $4) RETURNING id", booksTable)
 
-	row := tx.QueryRow(createBookQuery, book.Name, book.Author, book.ImageBook)
+	row := tx.QueryRow(createBookQuery, book.Name, book.Author, book.Description, book.ImageBook)
 	err = row.Scan(&bookId)
 	if err != nil {
 		tx.Rollback()
@@ -44,7 +44,7 @@ func (b *BookPostgres) Create(userId int, book models.Book) (int, error) {
 
 func (b *BookPostgres) GetAll() ([]models.Book, error) {
 	var books []models.Book
-	query := fmt.Sprintf(`SELECT b.id, b.name, b.author, b.imagebook FROM %s b`, booksTable)
+	query := fmt.Sprintf(`SELECT b.id, b.name, b.author, b.description, b.imagebook FROM %s b`, booksTable)
 	rowsRs, err := b.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (b *BookPostgres) GetAll() ([]models.Book, error) {
 	defer rowsRs.Close()
 	for rowsRs.Next() {
 		book := models.Book{}
-		err := rowsRs.Scan(&book.ID, &book.Name, &book.Author, &book.ImageBook)
+		err := rowsRs.Scan(&book.ID, &book.Name, &book.Author, &book.Description, &book.ImageBook)
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +63,7 @@ func (b *BookPostgres) GetAll() ([]models.Book, error) {
 
 func (b *BookPostgres) GetByUserId(userId int) ([]models.Book, error) {
 	var books []models.Book
-	query := fmt.Sprintf(`SELECT b.id, b.name, b.author, b.imageBook FROM %s b
+	query := fmt.Sprintf(`SELECT b.id, b.name, b.author,  b.description, b.imagebook FROM %s b
 								INNER JOIN %s ub on b.id = ub.book_id WHERE ub.user_id = $1`,
 		booksTable, usersBooksTable)
 	row, err := b.db.Query(query, userId)
@@ -73,7 +73,7 @@ func (b *BookPostgres) GetByUserId(userId int) ([]models.Book, error) {
 	defer row.Close()
 	for row.Next() {
 		book := models.Book{}
-		err := row.Scan(&book.ID, &book.Name, &book.Author, &book.ImageBook)
+		err := row.Scan(&book.ID, &book.Name, &book.Author, &book.Description, &book.ImageBook)
 		if err != nil {
 			return nil, err
 		}
@@ -109,16 +109,22 @@ func (b *BookPostgres) Update(bookId int, input models.UpdateBookInput) error {
 		argId++
 	}
 
+	if input.Description != nil {
+		setValues = append(setValues, fmt.Sprintf("description=$%d", argId))
+		args = append(args, *input.Description)
+		argId++
+	}
+
 	if input.ImageBook != nil {
 		setValues = append(setValues, fmt.Sprintf("imageBook=$%d", argId))
-		args = append(args, *input.Author)
+		args = append(args, *input.ImageBook)
 		argId++
 	}
 
 	setQuery := strings.Join(setValues, ", ")
 
-	query := fmt.Sprintf(`UPDATE %s b SET %s WHERE b.id = $1`,
-		booksTable, setQuery)
+	query := fmt.Sprintf(`UPDATE %s b SET %s WHERE b.id = $%d`,
+		booksTable, setQuery, argId)
 	args = append(args, bookId)
 
 	_, err := b.db.Exec(query, args...)

@@ -15,13 +15,14 @@ func NewBookService(bookRepo repository.Book, commentRepo repository.Comment) *B
 }
 
 func (b *BookService) Create(userId int, userBookComment models.UserCreateBook) (int, error) {
-	book := models.Book{Name: userBookComment.Name, Author: userBookComment.Author}
+	book := models.Book{Name: userBookComment.Name, Author: userBookComment.Author,
+		Description: userBookComment.Description, ImageBook: userBookComment.ImageBook}
 	comment := models.Comment{Message: userBookComment.Message}
 	id, err := b.bookRepo.Create(userId, book)
 	if err != nil {
 		return -1, err
 	}
-	_, err = b.commentRepo.Create(id, comment)
+	_, err = b.commentRepo.Create(userId, id, comment)
 	return id, err
 }
 

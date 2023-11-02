@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"book-discusser/pkg/models"
 	"book-discusser/pkg/service"
-	"book-discusser/pkg/sessions"
+	"fmt"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
 type Handler struct {
@@ -15,85 +19,88 @@ func NewHandler(services *service.Service) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) GetCookie(c *gin.Context) (*http.Cookie, error) {
-	s, err := c.Request.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			// If the cookie is not set, return an unauthorized status
-			newErrorResponse(c, http.StatusUnauthorized, "empty cookie")
-			return nil, err
-		}
-		// For any other type of error, return a bad request status
-		newErrorResponse(c, http.StatusBadRequest, err.Error())
-		return nil, err
-	}
-	return s, nil
-}
-
-func (h *Handler) GetSession(c *gin.Context) (*sessions.Session, error) {
-	// We then get the session from our session map
-	sessionToken, err := h.GetCookie(c)
-	userSession, err := h.services.Authorization.GetSession(sessionToken.Value)
-	if err != nil {
-		// If the session token is not present in database, return an unauthorized error
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return nil, err
-	}
-	// If the session is present, but has expired, we can delete the session, and return
-	// an unauthorized status
-	if userSession.IsExpired() {
-		err := h.services.Authorization.DeleteSession(userSession.ID)
-		if err != nil {
-			return nil, err
-		}
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return nil, err
-	}
-	return userSession, nil
-}
-
 func (h *Handler) goForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "book_form.html", gin.H{
 		"title": "Add Book Page",
 	})
 }
 
+func (h *Handler) createSession(c *gin.Context, id int, user models.User) (string, error) {
+	session := sessions.Default(c)
+	session.Set("id", id)
+	session.Set("email", user.Email)
+	session.Set("role", user.Role)
+	expiryTimeSession := time.Now().Add(time.Second * expiryTime).Format(time.DateTime)
+	session.Set("expires", expiryTimeSession)
+	session.Options(sessions.Options{
+		Path:     "/",
+		Secure:   false,
+		MaxAge:   expiryTime,
+		HttpOnly: true,
+	})
+	err := session.Save()
+	if err != nil {
+		fmt.Println(err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return "", err
+	}
+	return session.ID(), nil
+}
+
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
+	store, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+	router.Use(sessions.Sessions("mysession", store))
 	router.LoadHTMLGlob("./resources/templates/*")
 	router.Static("/css", "./resources/css")
 	router.Static("/img", "./resources/img")
+	router.GET("/", h.home)
 	auth := router.Group("/auth")
 	{
-		router.GET("/register", h.registerPage)
-		router.POST("/register", h.register)
-		router.GET("/login", h.loginPage)
-		router.POST("/login", h.login)
-		router.GET("/logout", h.logout)
+		authView := auth.Group("/view")
+		authView.Use(h.userIdentity)
+		{
+			authView.Static("/css", "./resources/css")
+			authView.Static("/img", "./resources/img")
+			authView.GET("/register", h.registerPage)
+			authView.GET("/login", h.loginPage)
+
+		}
+		auth.Static("/css", "./resources/css")
+		auth.Static("/img", "./resources/img")
+		auth.POST("/register", h.register)
+		auth.POST("/login", h.login)
+		auth.GET("/logout", h.logout)
 		auth.GET("/google_login", h.googleLogin)
 		auth.GET("/google_callback", h.googleCallback)
 	}
-
-	api := router.Group("/api", h.userIdentity)
+	api := router.Group("/api")
+	api.Use(h.isLogin)
 	{
+		api.Static("/css", "./resources/css")
+		api.Static("/img", "./resources/img")
 		books := api.Group("/books")
 		{
+			books.Static("/css", "./resources/css")
+			books.Static("/img", "./resources/img")
 			books.POST("/", h.createBook)
 			books.GET("/", h.getAllBooks)
 			books.GET("/:id", h.getBookByUserId)
 			books.PUT("/:id", h.updateBook)
 			books.DELETE("/:id", h.deleteComment)
-			router.GET("/add_book", h.goForm)
-		}
 
+		}
 		comments := api.Group("/comments")
 		{
+			comments.Static("/css", "./resources/css")
+			comments.Static("/img", "./resources/img")
 			comments.POST("/", h.createComment)
 			comments.GET("/", h.getAllComments)
 			comments.GET("/:id", h.getCommentByBookId)
 			comments.PUT("/:id", h.updateComment)
 			comments.DELETE("/:id", h.deleteComment)
 		}
+		api.GET("/add-book", h.goForm)
 	}
 	return router
 }

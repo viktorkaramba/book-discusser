@@ -38,8 +38,10 @@ func TestBookPostgres_Create(t *testing.T) {
 			args: args{
 				userId: 1,
 				book: models.Book{
-					Name:   "Verity",
-					Author: "Colleen Hoover",
+					Name:        "Verity",
+					Author:      "Colleen Hoover",
+					Description: "Description",
+					ImageBook:   "ImageBook",
 				},
 			},
 			id: 2,
@@ -47,7 +49,7 @@ func TestBookPostgres_Create(t *testing.T) {
 				mock.ExpectBegin()
 				rows := sqlmock.NewRows([]string{"id"}).AddRow(id)
 				mock.ExpectQuery("INSERT INTO books").
-					WithArgs(args.book.Name, args.book.Author).WillReturnRows(rows)
+					WithArgs(args.book.Name, args.book.Author, args.book.Description, args.book.ImageBook).WillReturnRows(rows)
 				mock.ExpectExec("INSERT INTO users_books").
 					WithArgs(args.userId, id).WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
@@ -58,15 +60,17 @@ func TestBookPostgres_Create(t *testing.T) {
 			args: args{
 				userId: 1,
 				book: models.Book{
-					Name:   "Verity",
-					Author: "Colleen Hoover",
+					Name:        "Verity",
+					Author:      "Colleen Hoover",
+					Description: "Description",
+					ImageBook:   "ImageBook",
 				},
 			},
 			mockBehavior: func(args args, id int) {
 				mock.ExpectBegin()
 				rows := sqlmock.NewRows([]string{"id"}).AddRow(id)
 				mock.ExpectQuery("INSERT INTO books").
-					WithArgs(args.book.Name, args.book.Author).WillReturnRows(rows)
+					WithArgs(args.book.Name, args.book.Author, args.book.Description, args.book.ImageBook).WillReturnRows(rows)
 				mock.ExpectExec("INSERT INTO users_books").WithArgs(args.userId, id).
 					WillReturnError(errors.New("some error"))
 				mock.ExpectRollback()
@@ -78,15 +82,17 @@ func TestBookPostgres_Create(t *testing.T) {
 			args: args{
 				userId: 1,
 				book: models.Book{
-					Name:   "",
-					Author: "Colleen Hoover",
+					Name:        "",
+					Author:      "Colleen Hoover",
+					Description: "Description",
+					ImageBook:   "ImageBook",
 				},
 			},
 			mockBehavior: func(args args, id int) {
 				mock.ExpectBegin()
 				rows := sqlmock.NewRows([]string{"id"}).AddRow(id).RowError(1, errors.New("empty field"))
 				mock.ExpectQuery("INSERT INTO books").
-					WithArgs(args.book.Name, args.book.Author).WillReturnRows(rows)
+					WithArgs(args.book.Name, args.book.Author, args.book.Description, args.book.ImageBook).WillReturnRows(rows)
 				mock.ExpectRollback()
 			},
 			wantErr: true,
@@ -125,23 +131,23 @@ func TestBookPostgres_GetAll(t *testing.T) {
 		{
 			name: "Ok",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "author"}).
-					AddRow(1, "name1", "author1").
-					AddRow(2, "name2", "author2").
-					AddRow(3, "name3", "author3")
+				rows := sqlmock.NewRows([]string{"id", "name", "author", "description", "imageBook"}).
+					AddRow(1, "name1", "author1", "description1", "imageBook1").
+					AddRow(2, "name2", "author2", "description2", "imageBook2").
+					AddRow(3, "name3", "author3", "description3", "imageBook3")
 
 				mock.ExpectQuery("SELECT (.+) FROM books b").WillReturnRows(rows)
 			},
 			want: []models.Book{
-				{1, "name1", "author1"},
-				{2, "name2", "author2"},
-				{3, "name3", "author3"},
+				{1, "name1", "author1", "description1", "imageBook1"},
+				{2, "name2", "author2", "description2", "imageBook2"},
+				{3, "name3", "author3", "description3", "imageBook3"},
 			},
 		},
 		{
 			name: "No Records",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "author"})
+				rows := sqlmock.NewRows([]string{"id", "name", "author", "description", "imageBook"})
 
 				mock.ExpectQuery("SELECT (.+) FROM books b").WillReturnRows(rows)
 			},
@@ -186,9 +192,9 @@ func TestBookPostgres_GetByUserId(t *testing.T) {
 		{
 			name: "Ok",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "author"}).
-					AddRow(1, "name1", "author1").
-					AddRow(2, "name2", "author2")
+				rows := sqlmock.NewRows([]string{"id", "name", "author", "description", "imageBook"}).
+					AddRow(1, "name1", "author1", "description1", "imageBook1").
+					AddRow(2, "name2", "author2", "description2", "imageBook2")
 
 				mock.ExpectQuery("SELECT (.+) FROM books b INNER JOIN users_books ub on (.+) WHERE (.+)").
 					WithArgs(1).WillReturnRows(rows)
@@ -197,14 +203,14 @@ func TestBookPostgres_GetByUserId(t *testing.T) {
 				userId: 1,
 			},
 			want: []models.Book{
-				{1, "name1", "author1"},
-				{2, "name2", "author2"},
+				{1, "name1", "author1", "description1", "imageBook1"},
+				{2, "name2", "author2", "description2", "imageBook2"},
 			},
 		},
 		{
 			name: "Not Found",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "author"})
+				rows := sqlmock.NewRows([]string{"id", "name", "author", "description", "imageBook"})
 
 				mock.ExpectQuery("SELECT (.+) FROM books b INNER JOIN users_books ub on (.+) WHERE (.+)").
 					WithArgs(1).WillReturnRows(rows)
@@ -311,13 +317,15 @@ func TestBookPostgres_Update(t *testing.T) {
 			name: "OK_AllFields",
 			mock: func() {
 				mock.ExpectExec("UPDATE books b SET (.+) WHERE (.+)").
-					WithArgs("new name", "new author", 1).WillReturnResult(sqlmock.NewResult(0, 1))
+					WithArgs("new name", "new author", "new description", "new image", 1).WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			input: args{
 				bookId: 1,
 				input: models.UpdateBookInput{
-					Name:   stringPointer("new name"),
-					Author: stringPointer("new author"),
+					Name:        stringPointer("new name"),
+					Author:      stringPointer("new author"),
+					Description: stringPointer("new description"),
+					ImageBook:   stringPointer("new image"),
 				},
 			},
 		},
@@ -325,12 +333,14 @@ func TestBookPostgres_Update(t *testing.T) {
 			name: "OK_WithoutAuthor",
 			mock: func() {
 				mock.ExpectExec("UPDATE books b SET (.+) WHERE (.+)").
-					WithArgs("new name", 1).WillReturnResult(sqlmock.NewResult(0, 1))
+					WithArgs("new name", "new description", "new image", 1).WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			input: args{
 				bookId: 1,
 				input: models.UpdateBookInput{
-					Name: stringPointer("new name"),
+					Name:        stringPointer("new name"),
+					Description: stringPointer("new description"),
+					ImageBook:   stringPointer("new image"),
 				},
 			},
 		},
@@ -338,12 +348,14 @@ func TestBookPostgres_Update(t *testing.T) {
 			name: "OK_WithoutName",
 			mock: func() {
 				mock.ExpectExec("UPDATE books b SET (.+) WHERE (.+)").
-					WithArgs("new author", 1).WillReturnResult(sqlmock.NewResult(0, 1))
+					WithArgs("new author", "new description", "new image", 1).WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			input: args{
 				bookId: 1,
 				input: models.UpdateBookInput{
-					Author: stringPointer("new author"),
+					Author:      stringPointer("new author"),
+					Description: stringPointer("new description"),
+					ImageBook:   stringPointer("new image"),
 				},
 			},
 		},

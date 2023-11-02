@@ -1,0 +1,101 @@
+<!--comment.html-->
+
+<div class="bg-img">
+  <div class="main-flex-container">
+    {{ template "header.html" .}}
+    <div class="my_main">
+      <div class="container book-list">
+        <form method="dialog">
+          <div class="form-group">
+            <label style="color: #222222">Enter Message:</label>
+            <textarea
+                    class="form-control"
+                    name="message"
+                    id="message"
+                    rows="4"
+                    cols="50">
+          </textarea>
+          </div>
+          <div class="form-group" style="color: #a7a7a7">
+            d
+            <button class="btn btn-dark btn-lg float-right" onclick="sendData()">Submit</button>
+          </div>
+        </form>
+      </div>
+
+      <!--Loop over the payload variable, which is the list of articles-->
+      {{range .payload }}
+      <div class="container book-list">
+        <!--Create the link for the article based on its ID-->
+        <div class="flex-container">
+          <div >
+            <p style="color: #222222"><img src="/img/user.png" style="width: 28px; height: 28px">{{.Name}}</p>
+            <div>{{.Message}}</div>
+          </div>
+          <div>
+            <img src="img/delete.svg" id="delete_img_{{.ID}}" style="width: 20px; height: 20px;" onclick="deleteComment({{.ID}})" alt="">
+          </div>
+        </div>
+      </div>
+      <!--Display the content of the article-->
+      {{end}}
+    </div>
+  </div>
+
+  <!--Embed the footer.html template at this location-->
+  {{ template "footer.html" .}}
+</div>
+
+<script>
+  function sendData() {
+    const message = document.getElementById('message').value;
+    const currentUrl = window.location.href;
+    const url = new URL(currentUrl);
+    const id = parseInt(url.pathname.split('/').pop());
+    const data = {id: id, message: message};
+    console.log(data)
+    fetch('http://localhost:8080/api/comments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+            .then(data => {
+              if(data.status === 200){
+                location.replace("http://localhost:8080/api/comments/" + id)
+                console.log('Success:', data);
+              }
+              else if(data.status === 401){
+                location.replace("http://localhost:8080/auth/view/login")
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+  }
+
+  function deleteComment(id) {
+    const currentUrl = window.location.href;
+    const url = new URL(currentUrl);
+    const bookId = parseInt(url.pathname.split('/').pop());
+    fetch('http://localhost:8080/api/comments/'+ id, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+            .then(data => {
+              if(data.status === 200){
+                location.replace("http://localhost:8080/api/comments/" + bookId)
+                console.log('Success:', data);
+              }
+              else if(data.status === 401){
+                location.replace("http://localhost:8080/auth/view/login")
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+  }
+</script>

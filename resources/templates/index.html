@@ -1,20 +1,30 @@
-
-<!--Embed the header.html template at this location-->
-
 <div class="bg-img">
-  {{ template "header.html" .}}
-  <div class="container book_list">
-    <!--Loop over the payload variable, which is the list of articles-->
-    {{range .payload }}
-    <!--Create the link for the article based on its ID-->
-    <a href="/api/comments/{{.ID}}">
-      <!--Display the title of the article -->
-      <h2>{{.Name}}</h2>
-    </a>
-    <!--Display the content of the article-->
-    <p>{{.Author}}</p>
-    {{end}}
-    <!--Embed the footer.html template at this location-->
-    <!--{{ template "footer.html" .}}-->
+  <div class="main-flex-container">
+    {{ template "header.html" .}}
+    <div class="my_main">
+      <!--Loop over the payload variable, which is the list of articles-->
+      {{range .payload }}
+      <div class="container book-list">
+        <!--Create the link for the article based on its ID-->
+        <div class="flex-container" style="align-items: flex-start">
+          <div style="flex-grow: 2; max-width: 200px;">
+            <div style="width: 200px; height: 300px">
+              <img src="{{.ImageBook}}" width="100%" height="100%" class="book-img">
+            </div>
+          </div>
+      <div style="flex-grow: 8;">
+        <a style="color: #222222" href="/api/comments/{{.ID}}">
+          <!--Display the title of the article -->
+          <h2>{{.Name}}</h2>
+        </a>
+        <h4 style="color: #222222">{{.Author}}</h4>
+        <div>{{.Description}}</div>
+      </div>
+    </div>
   </div>
+    {{end}}
+    </div>
+  </div>
+
+{{ template "footer.html" .}}
 </div>

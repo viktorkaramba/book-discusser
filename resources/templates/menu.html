@@ -1,11 +1,33 @@
 <!--menu.html-->
-<div class="container">
-  <nav class="navbar navbar-expand-sm bg-light">
-    <a href="\"><h2>Home</h2></a>
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <a href="\add_book">Add Book</a>
-      </li>
-    </ul>
-  </nav>
+<div class="my_header">
+  <div class="container">
+    <nav class="navbar navbar-expand-sm bg-light nav-menu">
+      <a href="/"><h2>Home</h2></a>
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a href="\api\add-book"><img src="img/plus.svg" id="add_book_img" style="width: 30px; height: 30px;" alt=""></a>
+        </li>
+        <li class="nav-item">
+          <a href="" onclick="logOut()"><img src="img/logout.svg" id="logout_img" style="width: 30px; height: 30px; margin-left: 10px" alt=""></a>
+        </li>
+      </ul>
+    </nav>
+  </div>
 </div>
+<script>
+  function logOut() {
+    fetch('http://localhost:8080/auth/logout', {
+      method: 'GET',
+    })
+            .then(data => {
+              console.log('Success:', data);
+              if(data.status === 200){
+                location.replace("http://localhost:8080/auth/view/login")
+                console.log('Success:', data);
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+  }
+</script>

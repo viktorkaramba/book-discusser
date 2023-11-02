@@ -13,15 +13,15 @@ func NewCommentService(repo repository.Comment) *CommentService {
 	return &CommentService{repo: repo}
 }
 
-func (c *CommentService) Create(bookId int, comment models.Comment) (int, error) {
-	return c.repo.Create(bookId, comment)
+func (c *CommentService) Create(userId, bookId int, comment models.Comment) (int, error) {
+	return c.repo.Create(userId, bookId, comment)
 }
 
 func (c *CommentService) GetAll() ([]models.Comment, error) {
 	return c.repo.GetAll()
 }
 
-func (c *CommentService) GetByBookId(bookId int) ([]models.Comment, error) {
+func (c *CommentService) GetByBookId(bookId int) ([]models.UsersComments, error) {
 	return c.repo.GetByBookId(bookId)
 }
 

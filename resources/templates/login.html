@@ -10,20 +10,24 @@
     <div class="bg-img">
       <div class="content">
         <header>Login Form</header>
-        <form action="#">
+        <form method="dialog">
           <div class="field">
             <span class="fa fa-user"></span>
-            <input type="email" required placeholder="Email">
+            <input type="email" id="email" required placeholder="Email">
           </div>
+
           <div class="field space">
             <span class="fa fa-lock"></span>
-            <input type="password" class="pass-key" required placeholder="Password">
+            <input type="password" id="password" class="pass-key" required placeholder="Password" minlength="8" maxlength="16">
             <span class="show">SHOW</span>
           </div>
           <div class="pass">
           </div>
+          <p id="error" class="error">Invalid email or password</p>
+          <div class="pass">
+          </div>
           <div class="field">
-            <input type="submit" value="LOGIN">
+            <input type="submit" value="LOGIN" onclick="sendData()">
           </div>
         </form>
         <div class="login">Or login with</div>
@@ -33,7 +37,7 @@
           </div>
         </div>
         <div class="signup">Don't have account?
-          <a href="#">Signup Now</a>
+          <a href="/auth/view/register">Signup Now</a>
         </div>
       </div>
     </div>
@@ -52,8 +56,29 @@
          showBtn.style.color = "#222";
        }
       });
+
+      function sendData() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const data = {email: email, password: password};
+        fetch('http://localhost:8080/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          })
+                  .then(data => {
+                    if (data.status === 500){
+                      console.error('Error:', data.statusText);
+                      document.getElementById("error").style.display = "block";
+                    }
+                    else {
+                      location.replace("http://localhost:8080/api/books");
+                      console.log('Success:', data.json());
+                    }
+                  })
+      }
     </script>
-
-
   </body>
 </html>

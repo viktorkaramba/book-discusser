@@ -20,16 +20,17 @@ body, html {
   z-index: 999;
   text-align: center;
   padding: 60px 32px;
-  width: 370px;
+  width: 360px;
   transform: translate(-50%,-50%);
   background:  #a7a7a7;
+  border-radius: 10px;
   box-shadow: -1px 4px 28px 0px rgba(0,0,0,0.75);
 }
 .content header{
   color: white;
   font-size: 33px;
   font-weight: 600;
-  margin: 0 0 35px 0;
+  margin: 0 0 10px 0;
   font-family: 'Montserrat',sans-serif;
 }
 .field{
@@ -137,14 +138,83 @@ i span{
   font-family: 'Poppins',sans-serif;
 }
 .signup a{
-  color: #3498db;
+  color: #222222;
   text-decoration: none;
 }
 .signup a:hover{
   text-decoration: underline;
 }
-.book_list{
-  background-color: antiquewhite;
-  margin-top: 2px;
+.book-list{
+  background-color:  #a7a7a7;
+  border-radius: 10px;
+  color: white;
+  box-shadow: -1px 4px 28px 0px rgba(0,0,0,0.75);
+  margin-top: 5px;
   padding: 15px;
+}
+.error{
+  display: none;
+  font-size: 14px;
+  font-family: 'Poppins',sans-serif;
+  background: rgba(255,255,255,0.94);
+  padding: 5px;
+  text-align: start;
+  color: #ff3333
+}
+
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.book-img{
+  border: 5px solid #222222;
+  border-radius: 10px;
+}
+
+.flex-container > div {
+  border: 5px #222222;
+  margin: 10px;
+}
+textarea {
+  resize: none;
+}
+.nav-menu{
+  box-shadow: -1px 4px 28px 0px rgba(0,0,0,0.75);
+  border-radius: 10px;
+  color: #222222;
+  margin: 10px;
+}
+.nav-menu a{
+  color: #222222;
+  text-underline-style: none ;
+}
+
+.main-flex-container{
+  display: flex;
+  flex-direction: column;
+  height: 86.5%;
+}
+
+.my_header {
+  flex-grow: 1;
+  background-color: #222222;
+}
+
+.my_main {
+  flex-grow: 8;
+  overflow-y: auto;
+}
+
+.my_footer{
+  background-color: #222222;
+  color: white;
+  flex-grow: 1;
+}
+
+.my_footer_flex{
+  display: flex;
+  align-items: baseline;
+  margin: 10px;
 }

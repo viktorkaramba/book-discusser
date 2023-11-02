@@ -21,6 +21,7 @@ func TestCommentPostgres_Create(t *testing.T) {
 	r := NewCommentPostgres(db)
 
 	type args struct {
+		userId  int
 		bookId  int
 		comment models.Comment
 	}
@@ -37,6 +38,7 @@ func TestCommentPostgres_Create(t *testing.T) {
 		{
 			name: "OK",
 			args: args{
+				userId: 1,
 				bookId: 1,
 				comment: models.Comment{
 					Message: "Good Book!!!",
@@ -49,13 +51,14 @@ func TestCommentPostgres_Create(t *testing.T) {
 				mock.ExpectQuery("INSERT INTO comments").
 					WithArgs(args.comment.Message).WillReturnRows(rows)
 				mock.ExpectExec("INSERT INTO books_comments").
-					WithArgs(args.bookId, id).WillReturnResult(sqlmock.NewResult(1, 1))
+					WithArgs(args.userId, args.bookId, id).WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
 		},
 		{
 			name: "2nd Insert Error",
 			args: args{
+				userId: 1,
 				bookId: 1,
 				comment: models.Comment{
 					Message: "Good Book!!!",
@@ -75,6 +78,7 @@ func TestCommentPostgres_Create(t *testing.T) {
 		{
 			name: "Empty Fields",
 			args: args{
+				userId: 1,
 				bookId: 1,
 				comment: models.Comment{
 					Message: "",
@@ -94,7 +98,7 @@ func TestCommentPostgres_Create(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCase.mockBehavior(testCase.args, testCase.id)
-			got, err := r.Create(testCase.args.bookId, testCase.args.comment)
+			got, err := r.Create(testCase.args.userId, testCase.args.bookId, testCase.args.comment)
 			if testCase.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -178,33 +182,35 @@ func TestCommentPostgres_GetByBookId(t *testing.T) {
 		name    string
 		mock    func()
 		input   args
-		want    []models.Comment
+		want    []models.UsersComments
 		wantErr bool
 	}{
 		{
 			name: "Ok",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "message"}).
-					AddRow(1, "message1").
-					AddRow(2, "message2")
+				rows := sqlmock.NewRows([]string{"id", "message", "name"}).
+					AddRow(1, "message1", "user1").
+					AddRow(2, "message2", "user2")
 
-				mock.ExpectQuery("SELECT (.+) FROM comments c INNER JOIN books_comments bc on (.+) WHERE (.+)").
+				mock.ExpectQuery("SELECT (.+) FROM comments c JOIN books_comments bc on c.id = bc.comment_id " +
+					"JOIN users u ON u.id = bc.User_id WHERE (.+)").
 					WithArgs(1).WillReturnRows(rows)
 			},
 			input: args{
 				bookId: 1,
 			},
-			want: []models.Comment{
-				{1, "message1"},
-				{2, "message2"},
+			want: []models.UsersComments{
+				{1, "message1", "user1"},
+				{2, "message2", "user2"},
 			},
 		},
 		{
 			name: "Not Found",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "message"})
+				rows := sqlmock.NewRows([]string{"id", "message", "name"})
 
-				mock.ExpectQuery("SELECT (.+) FROM comments c INNER JOIN books_comments bc on (.+) WHERE (.+)").
+				mock.ExpectQuery("SELECT (.+) FROM comments c JOIN books_comments bc on c.id = bc.comment_id " +
+					"JOIN users u ON u.id = bc.User_id WHERE (.+)").
 					WithArgs(1).WillReturnRows(rows)
 			},
 			input: args{

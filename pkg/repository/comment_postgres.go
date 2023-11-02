@@ -16,7 +16,7 @@ func NewCommentPostgres(db *sql.DB) *CommentPostgres {
 	return &CommentPostgres{db: db}
 }
 
-func (c *CommentPostgres) Create(bookId int, comment models.Comment) (int, error) {
+func (c *CommentPostgres) Create(userId, bookId int, comment models.Comment) (int, error) {
 	tx, err := c.db.Begin()
 	if err != nil {
 		return 0, err
@@ -32,8 +32,8 @@ func (c *CommentPostgres) Create(bookId int, comment models.Comment) (int, error
 		return 0, err
 	}
 
-	createBooksCommentQuery := fmt.Sprintf("INSERT INTO %s (book_Id, comment_Id) values ($1, $2)", booksCommentsTable)
-	_, err = tx.Exec(createBooksCommentQuery, bookId, commentId)
+	createBooksCommentQuery := fmt.Sprintf("INSERT INTO %s (user_Id, book_Id, comment_Id) values ($1, $2, $3)", booksCommentsTable)
+	_, err = tx.Exec(createBooksCommentQuery, userId, bookId, commentId)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -61,12 +61,12 @@ func (c *CommentPostgres) GetAll() ([]models.Comment, error) {
 	return comments, nil
 }
 
-func (c *CommentPostgres) GetByBookId(bookId int) ([]models.Comment, error) {
+func (c *CommentPostgres) GetByUserId(userId int) ([]models.Comment, error) {
 	var comments []models.Comment
 	query := fmt.Sprintf(`SELECT c.id, c.message FROM %s c
-								INNER JOIN %s bc on c.id = bc.comment_id WHERE bc.book_id = $1`,
+								INNER JOIN %s bc on c.id = bc.comment_id WHERE bc.user_id = $1`,
 		commentsTable, booksCommentsTable)
-	row, err := c.db.Query(query, bookId)
+	row, err := c.db.Query(query, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +83,30 @@ func (c *CommentPostgres) GetByBookId(bookId int) ([]models.Comment, error) {
 		return nil, errors.New("not found")
 	}
 	return comments, err
+}
+
+func (c *CommentPostgres) GetByBookId(bookId int) ([]models.UsersComments, error) {
+	var usersComments []models.UsersComments
+	query := fmt.Sprintf(`SELECT c.id, c.message, u.name, u.email FROM %s c
+								JOIN %s bc on c.id = bc.comment_id JOIN %s u ON u.id = bc.User_id WHERE bc.book_id = $1`,
+		commentsTable, booksCommentsTable, usersTable)
+	row, err := c.db.Query(query, bookId)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+	for row.Next() {
+		usersComment := models.UsersComments{}
+		err := row.Scan(&usersComment.ID, &usersComment.Message, &usersComment.Name, &usersComment.Email)
+		if err != nil {
+			return nil, err
+		}
+		usersComments = append(usersComments, usersComment)
+	}
+	if len(usersComments) == 0 {
+		return usersComments, errors.New("not found")
+	}
+	return usersComments, err
 }
 
 func (c *CommentPostgres) Delete(commentId int) error {
@@ -104,7 +128,7 @@ func (c *CommentPostgres) Update(commentId int, input models.UpdateCommentInput)
 
 	setQuery := strings.Join(setValues, ", ")
 
-	query := fmt.Sprintf(`UPDATE %s c SET %s WHERE c.id = $1`, commentsTable, setQuery)
+	query := fmt.Sprintf(`UPDATE %s c SET %s WHERE c.id = $%d`, commentsTable, setQuery, argId)
 	args = append(args, commentId)
 	_, err := c.db.Exec(query, args...)
 	return err

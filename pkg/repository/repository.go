@@ -2,19 +2,14 @@ package repository
 
 import (
 	"book-discusser/pkg/models"
-	"book-discusser/pkg/sessions"
 	"database/sql"
 )
 
 type Authorization interface {
 	CreateUser(user models.User) (int, error)
 	GetUser(email, password string) (*models.User, error)
-}
-
-type Session interface {
-	CreateSession(session sessions.Session) (string, error)
-	GetSession(sessionId string) (*sessions.Session, error)
-	Delete(sessionId string) error
+	GetUserById(userId int) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
 }
 
 type Book interface {
@@ -26,9 +21,10 @@ type Book interface {
 }
 
 type Comment interface {
-	Create(bookId int, book models.Comment) (int, error)
+	Create(userId, bookId int, book models.Comment) (int, error)
 	GetAll() ([]models.Comment, error)
-	GetByBookId(bookId int) ([]models.Comment, error)
+	GetByBookId(bookId int) ([]models.UsersComments, error)
+	GetByUserId(userId int) ([]models.Comment, error)
 	Delete(commentId int) error
 	Update(commentId int, input models.UpdateCommentInput) error
 }
@@ -37,7 +33,6 @@ type Repository struct {
 	Authorization
 	Book
 	Comment
-	Session
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -45,6 +40,5 @@ func NewRepository(db *sql.DB) *Repository {
 		Authorization: NewAuthPostgres(db),
 		Book:          NewBookPostgres(db),
 		Comment:       NewCommentPostgres(db),
-		Session:       NewSessionPostgres(db),
 	}
 }

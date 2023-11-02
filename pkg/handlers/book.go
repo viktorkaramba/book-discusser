@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"book-discusser/pkg/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
 func (h *Handler) createBook(c *gin.Context) {
-	cookie, err := c.Cookie("userId")
-	userId, err := strconv.Atoi(cookie)
+	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -31,22 +31,41 @@ func (h *Handler) createBook(c *gin.Context) {
 	})
 }
 
+type getAllBooksResponse struct {
+	Data []models.Book `json:"data"`
+}
+
 func (h *Handler) getAllBooks(c *gin.Context) {
+	role, err := getRole(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 	books, err := h.services.Book.GetAll()
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.HTML(http.StatusOK, "index.html", gin.H{
-		"title":   "Home Page",
-		"payload": books,
-	})
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if role == "ADMIN" {
+		c.HTML(http.StatusOK, "admin_page.html", gin.H{
+			"title":   "Admin Page",
+			"payload": books,
+		})
+	} else {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"title":   "Home Page",
+			"payload": books,
+		})
+	}
 }
 
 func (h *Handler) getBookByUserId(c *gin.Context) {
-	cookie, err := c.Cookie("userId")
-	userId, err := strconv.Atoi(cookie)
+	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -64,19 +83,21 @@ func (h *Handler) getBookByUserId(c *gin.Context) {
 func (h *Handler) updateBook(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
+	fmt.Println(id)
 	if err != nil {
-		//newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
 		return
 	}
 
 	var input models.UpdateBookInput
 	if err := c.BindJSON(&input); err != nil {
-		//newErrorResponse(c, http.StatusBadRequest, err.Error())
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
+	fmt.Println(*input.ImageBook)
 	if err := h.services.Book.Update(id, input); err != nil {
-		//newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 

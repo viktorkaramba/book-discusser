@@ -28,12 +28,13 @@ func TestAuthPostgres_CreateUser(t *testing.T) {
 			mock: func() {
 				rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 				mock.ExpectQuery("INSERT INTO users").
-					WithArgs("Test", "test", "password").WillReturnRows(rows)
+					WithArgs("Test", "test", "password", "USER").WillReturnRows(rows)
 			},
 			input: models.User{
 				Name:     "Test",
 				Email:    "test",
 				Password: "password",
+				Role:     "USER",
 			},
 			want: 1,
 		},
@@ -42,12 +43,13 @@ func TestAuthPostgres_CreateUser(t *testing.T) {
 			mock: func() {
 				rows := sqlmock.NewRows([]string{"id"})
 				mock.ExpectQuery("INSERT INTO users").
-					WithArgs("Test", "test", "").WillReturnRows(rows)
+					WithArgs("Test", "test", "", "USER").WillReturnRows(rows)
 			},
 			input: models.User{
 				Name:     "Test",
 				Email:    "test",
 				Password: "",
+				Role:     "USER",
 			},
 			wantErr: true,
 		},
@@ -93,8 +95,8 @@ func TestAuthPostgres_GetUser(t *testing.T) {
 		{
 			name: "Ok",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "email", "password"}).
-					AddRow(1, "Test", "testemail", "password")
+				rows := sqlmock.NewRows([]string{"id", "name", "email", "password", "role"}).
+					AddRow(1, "Test", "testemail", "password", "user")
 				mock.ExpectQuery("SELECT (.+) FROM users").
 					WithArgs("testemail", "password").WillReturnRows(rows)
 			},
@@ -104,12 +106,13 @@ func TestAuthPostgres_GetUser(t *testing.T) {
 				Name:     "Test",
 				Email:    "testemail",
 				Password: "password",
+				Role:     "user",
 			},
 		},
 		{
 			name: "Not Found",
 			mock: func() {
-				rows := sqlmock.NewRows([]string{"id", "name", "email", "password"})
+				rows := sqlmock.NewRows([]string{"id", "name", "email", "password", "role"})
 				mock.ExpectQuery("SELECT (.+) FROM users").
 					WithArgs("not", "found").WillReturnRows(rows)
 			},

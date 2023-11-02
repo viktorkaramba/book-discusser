@@ -1,57 +1,163 @@
 <!--comment.html-->
 
 <div class="bg-img">
-<!--Embed the header.html template at this location-->
-{{ template "header.html" .}}
-    <div class="container book_list">
-<!--Loop over the payload variable, which is the list of articles-->
-{{range .comments }}
-<!--Create the link for the article based on its ID-->
-<h3>{{.Message}}</h3>
-<!--Display the content of the article-->
-{{end}}
+    <div class="main-flex-container">
+        {{ template "header.html" .}}
+        <div class="my_main">
+            <div class="container book-list">
+                <form method="dialog">
+                    <div class="form-group">
+                        <label style="color: #222222">Enter Message:</label>
+                        <textarea
+                                class="form-control"
+                                name="message"
+                                id="message"
+                                rows="4"
+                                cols="50">
+          </textarea>
+                    </div>
+                    <div class="form-group" style="color: #a7a7a7">
+                        d
+                        <button class="btn btn-dark btn-lg float-right" onclick="sendData()">Submit</button>
+                    </div>
+                </form>
+            </div>
 
-<form method="dialog">
-    <div class="form-group">
-        <label>Enter Message:</label>
-        <input class="form-control"
-               type="text"
-               name="message"
-               id="message"
-               placeholder="Input Message Here">
+            <!--Loop over the payload variable, which is the list of articles-->
+            {{$userEmail := .userEmail}}
+            {{range .payload }}
+            <div class="container book-list">
+                <!--Create the link for the article based on its ID-->
+                <div class="flex-container">
+                    <div >
+                        <p style="color: #222222"><img src="/img/user.png">{{.Name}}</p>
+                        <div id="read_message_{{.ID}}" style="display: block"> {{ .Message}}</div>
+                        <div id="edit_message_{{.ID}}" style="display: none">
+                            <label>Edit Message:</label>
+                            <textarea
+                                    class="form-control"
+                                    name="message"
+                                    rows="3"
+                                    cols="100"
+                                    id="message_{{.ID}}">
+                            {{.Message}}
+                            </textarea>
+                        </div>
+                    </div>
+                    {{ if eq .Email $userEmail }}
+                    <div>
+                        <img src="img/delete.svg" id="delete_{{.ID}}" style="width: 20px; height: 20px;" onclick="deleteComment({{.ID}})" alt="">
+                        <div style="flex-grow: 1;  max-width: 20px; margin-top: 15px">
+                            <img src="img/edit.svg" id="edit_{{.ID}}" style="display: block;" onclick="edit({{.ID}})" alt="">
+                            <img src="img/accept.svg" id="accept_{{.ID}}" style="width: 20px; height: 20px; display: none; margin-bottom: 5px"  onclick="accept({{.ID}})" alt="">
+                            <img src="img/stop.svg" id="stop_{{.ID}}" style="width: 20px; height: 20px;  display: none" onclick="stop({{.ID}})" alt="">
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            <!--Display the content of the article-->
+            {{end}}
+        </div>
     </div>
-    <script>
-        function sendData() {
-            var message = document.getElementById('message').value;
-            var currentUrl = window.location.href;
-            var url = new URL(currentUrl);
-            var id = parseInt(url.pathname.split('/').pop());
-            var data = { id: id, message: message};
-            console.log(data)
-            fetch('http://localhost:8080/api/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
+
+    <!--Embed the footer.html template at this location-->
+    {{ template "footer.html" .}}
+</div>
+
+<script>
+    function edit(id){
+        document.getElementById("edit_".concat(id)).style.display = "none";
+        document.getElementById("accept_".concat(id)).style.display = "block";
+        document.getElementById("stop_".concat(id)).style.display = "block";
+        document.getElementById("edit_message_".concat(id)).style.display = "block";
+        document.getElementById("read_message_".concat(id)).style.display = "none";
+    }
+
+    function stop(id){
+        document.getElementById("edit_img_".concat(id)).style.display = "block";
+        document.getElementById("accept_img_".concat(id)).style.display = "none";
+        document.getElementById("stop_img_".concat(id)).style.display = "none";
+        document.getElementById("edit_message_".concat(id)).style.display = "none";
+        document.getElementById("read_message_".concat(id)).style.display = "block";
+    }
+
+    function accept(id){
+        const currentUrl = window.location.href;
+        const url = new URL(currentUrl);
+        const bookId = parseInt(url.pathname.split('/').pop());
+        const message = document.getElementById('message_'.concat(id)).value;
+        const data = {message: message};
+        fetch('http://localhost:8080/api/comments/' + id, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(data => {
+                if(data.status === 200){
+                    location.replace("http://localhost:8080/api/comments/" + bookId)
+                    console.log('Success:', data);
+                }
+                else if(data.status === 401){
+                    location.replace("http://localhost:8080/auth/view/login")
+                }
             })
-                .then(response => response.json())
-                .then(data => {
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+    }
+
+    function sendData() {
+        const message = document.getElementById('message').value;
+        const currentUrl = window.location.href;
+        const url = new URL(currentUrl);
+        const id = parseInt(url.pathname.split('/').pop());
+        const data = {id: id, message: message};
+        console.log(data)
+        fetch('http://localhost:8080/api/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(data => {
+                if(data.status === 200){
                     location.replace("http://localhost:8080/api/comments/" + id)
                     console.log('Success:', data);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                })
-        }
-    </script>
-    <div class="form-group">
-        <button class="btn btn-success btn-lg float-right" onclick="sendData()">
-            Submit
-        </button>
-    </div>
-</form>
-<!--Embed the footer.html template at this location-->
-{{ template "footer.html" .}}
-    </div>
-</div>
+                }
+                else if(data.status === 401){
+                    location.replace("http://localhost:8080/auth/view/login")
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+    }
+
+    function deleteComment(id) {
+        const currentUrl = window.location.href;
+        const url = new URL(currentUrl);
+        const bookId = parseInt(url.pathname.split('/').pop());
+        fetch('http://localhost:8080/api/comments/'+ id, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(data => {
+                if(data.status === 200){
+                    location.replace("http://localhost:8080/api/comments/" + bookId)
+                    console.log('Success:', data);
+                }
+                else if(data.status === 401){
+                    location.replace("http://localhost:8080/auth/view/login")
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+    }
+</script>
