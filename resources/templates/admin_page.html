@@ -1,4 +1,4 @@
-<div class="bg-img">
+<div class="bg-img" xmlns="http://www.w3.org/1999/html">
 <div class="main-flex-container">
   {{ template "header.html" .}}
     <div class="my_main">
@@ -7,61 +7,74 @@
     <div class="container book-list">
       <!--Create the link for the article based on its ID-->
       <div class="flex-container" style="align-items: flex-start">
-        <div style="flex-grow: 1; max-width: 200px;">
+        <div style="max-width: 200px;">
           <div style="width: 200px; height: 300px">
             <img src="{{.ImageBook}}" width="100%" height="100%" class="book-img">
           </div>
         </div>
-        <div style="flex-grow: 7;" id="read_div_{{.ID}}">
-          <a style="color: #222222" href="/api/comments/{{.ID}}">
+        <div  id="read_div_{{.ID}}">
+          <a style="color: #222222" href="/api/books/comments/{{.ID}}">
             <!--Display the title of the article -->
             <h2>{{.Name}}</h2>
           </a>
           <h4 style="color: #222222">{{.Author}}</h4>
           <div>{{.Description}}</div>
         </div>
-        <div style="flex-grow: 7; display: none" id="edit_div_{{.ID}}">
-          <div>
-            <label>Enter New Book Name:</label>
-            <input class="form-control"
-                   type="text"
-                   name="name"
-                   id="name_{{.ID}}"
-                   value="{{.Name}}"
-                   placeholder="Input Book Name Here">
-          </div>
-          <label>Enter New Author:</label>
-          <input class="form-control"
-                 type="text"
-                 name="author"
-                 id="author_{{.ID}}"
-                 value="{{.Author}}"
-                 placeholder="Input Author Here">
-          <label>Enter New Description:</label>
-          <textarea
-                  class="form-control"
-                  name="description"
-                  rows="5"
-                  cols="100"
-                  id="description_{{.ID}}"
-          >
-                {{.Description}}
-            </textarea>
-          <label>Enter New ImageLink:</label>
-          <input class="form-control"
-                 type="text"
-                 name="imageLink"
-                 id="imageLink_{{.ID}}"
-                 placeholder="Input Image Link Here">
-        </div>
-        <div style="flex-grow: 1;  max-width: 20px;">
-          <img src="img/edit.svg" id="edit_img_{{.ID}}" style="display: block;" onclick="edit({{.ID}})" alt="">
-          <img src="img/accept.svg" id="accept_img_{{.ID}}" style="width: 20px; height: 20px; display: none; margin-bottom: 5px"  onclick="sendData({{.ID}},{{.ImageBook}})" alt="">
-          <img src="img/stop.svg" id="stop_img_{{.ID}}" style="width: 20px; height: 20px;  display: none" onclick="stop({{.ID}})" alt="">
+          <form method="dialog">
+            <div class="flex-container" style="align-items: flex-start">
+              <div style="display: none" id="edit_div_{{.ID}}">
+                <div class="form-group">
+                  <label>Enter New Book Name:</label>
+                  <input class="form-control"
+                         type="text"
+                         name="name"
+                         minlength="1"
+                         required
+                         id="name_{{.ID}}"
+                         value="{{.Name}}"
+                         placeholder="Input Book Name Here">
+                </div>
+                <div class="form-group">
+                  <label>Enter New Author:</label>
+                  <input class="form-control"
+                         type="text"
+                         name="author"
+                         minlength="1"
+                         id="author_{{.ID}}"
+                         required
+                         value="{{.Author}}"
+                         placeholder="Input Author Here">
+                </div>
+                <div class="form-group">
+                  <label>Enter New Description:</label>
+                  <textarea
+                          class="form-control"
+                          name="description"
+                          rows="5"
+                          cols="100"
+                          minlength="1"
+                          required
+                          id="description_{{.ID}}">{{.Description}}</textarea>
+                </div>
+                <div class="form-group">
+                  <label>Enter New ImageLink:</label>
+                  <input class="form-control"
+                         type="text"
+                         name="imageLink"
+                         id="imageLink_{{.ID}}"
+                         placeholder="Input Image Link Here">
+                </div>
+              </div>
+              <div class="form-group" style="max-width: 20px;">
+                <button style="background: none; border: none" type="submit"><img src="img/delete.svg" id="delete_{{.ID}}" style="width: 20px; height: 20px; " onclick="deleteComment({{.ID}})" alt=""></button>
+                <button style="background: none; border: none" type="submit"><img src="img/edit.svg" id="edit_img_{{.ID}}" style="width: 20px; height: 20px;  margin-top: 15px;" onclick="edit({{.ID}})" alt=""></button>
+                <button style="background: none; border: none" type="submit"><img src="img/accept.svg" id="accept_img_{{.ID}}" style="width: 20px; height: 20px; display: none;margin-top: 15px;" onclick="sendData({{.ID}},{{.ImageBook}})" alt=""></button>
+                <button style="background: none; border: none" type="submit"><img src="img/stop.svg" id="stop_img_{{.ID}}" style="width: 20px; height: 20px;  display: none; margin-top: 5px;" onclick="stop({{.ID}})" alt=""></button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
-
-    </div>
     {{end}}
     <!--Embed the footer.html template at this location-->
   </div>
@@ -71,20 +84,23 @@
 <script>
 
 function edit(id){
-  document.getElementById("edit_img_".concat(id)).style.display = "none";
+  document.getElementById("edit_div_".concat(id)).style.display = "none";
   document.getElementById("accept_img_".concat(id)).style.display = "block";
+  document.getElementById("edit_img_".concat(id)).style.display = "none";
   document.getElementById("stop_img_".concat(id)).style.display = "block";
   document.getElementById("edit_div_".concat(id)).style.display = "block";
   document.getElementById("read_div_".concat(id)).style.display = "none";
 }
 
 function stop(id){
+  document.getElementById("edit_div_".concat(id)).style.display = "none";
   document.getElementById("edit_img_".concat(id)).style.display = "block";
   document.getElementById("accept_img_".concat(id)).style.display = "none";
   document.getElementById("stop_img_".concat(id)).style.display = "none";
   document.getElementById("edit_div_".concat(id)).style.display = "none";
   document.getElementById("read_div_".concat(id)).style.display = "block";
 }
+
 
 function sendData(id, imageBook){
   const name = document.getElementById('name_'.concat(id)).value;
@@ -95,25 +111,48 @@ function sendData(id, imageBook){
     image = imageBook;
   }
   const data = {name: name, author: author, description: description, imageBook: image};
-  fetch('http://localhost:8080/api/books/' + id, {
-    method: 'PUT',
+  if(name.length > 0 && author.length > 0 && description.length >0 && image.length > 0){
+    fetch('http://localhost:8080/api/books/' + id, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+            .then(data => {
+              if (data.status === 401) {
+                location.replace("http://localhost:8080/auth/view/login")
+              } else if (data.status === 200) {
+                location.replace("http://localhost:8080/api/books")
+                console.log('Success:', data.json());
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            })
+  }
+}
+function deleteComment(id) {
+  const currentUrl = window.location.href;
+  const url = new URL(currentUrl);
+  const bookId = parseInt(url.pathname.split('/').pop());
+  fetch('http://localhost:8080/api/books/'+ id, {
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
+    }
   })
           .then(data => {
-            if(data.status === 401){
-              location.replace("http://localhost:8080/auth/view/login")
-            }
-            else if (data.status === 200){
+            if(data.status === 200){
               location.replace("http://localhost:8080/api/books")
-              console.log('Success:', data.json());
+              console.log('Success:', data);
+            }
+            else if(data.status === 401){
+              location.replace("http://localhost:8080/auth/view/login")
             }
           })
           .catch((error) => {
             console.error('Error:', error);
           })
 }
-
 </script>

@@ -10,6 +10,8 @@
                type="text"
                name="name"
                id="name"
+               required
+               minlength="1"
                placeholder="Input Book Name Here">
       </div>
       <div class="form-group">
@@ -18,6 +20,8 @@
                type="text"
                name="author"
                id="author"
+               required
+               minlength="1"
                placeholder="Input Author Here">
       </div>
       <div class="form-group">
@@ -26,9 +30,10 @@
                 class="form-control"
                name="description"
                id="description"
+                required
+                minlength="1"
                rows="3"
-               cols="50">
-          </textarea>
+               cols="50"></textarea>
       </div>
       <div class="form-group">
         <label>Enter Message:</label>
@@ -36,9 +41,10 @@
                 class="form-control"
                 name="message"
                 id="message"
+                required
+                minlength="1"
                 rows="4"
-                cols="50">
-          </textarea>
+                cols="50"></textarea>
       </div>
       <div style="display: flex; flex-direction: column; ">
         <div class="form-group" style="margin: 0">
@@ -46,12 +52,13 @@
           <input class="form-control"
                  type="text"
                  name="imageLink"
+                 minlength="1"
+                 required
                  id="imageLink"
                  placeholder="Input Image Link Here">
-
         </div>
         <div class="form-group"  style="margin: 10px 0 0 0">
-          <button class="btn btn-dark btn-m float-right" onclick="sendData()">
+          <button class="btn btn-dark btn-m float-right" type="submit" onclick="sendData()">
             Add Book
           </button>
         </div>
@@ -70,24 +77,26 @@
     const message = document.getElementById('message').value;
     const image = document.getElementById('imageLink').value;
     const data = {name: name, author: author, description: description, message: message, imageBook: image};
-    fetch('http://localhost:8080/api/books', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-            .then(data => {
-              if(data.status === 401){
-                location.replace("http://localhost:8080/auth/view/login")
-              }
-              else if (data.status === 200){
-                location.replace("http://localhost:8080/api/books")
-                console.log('Success:', data);
-              }
-            })
-            .catch((error) => {
-              console.error('Error:', error);
-            })
+    if(name.length > 0 && author.length > 0 && description.length >0 && message.length > 0 && image.length > 0){
+      fetch('http://localhost:8080/api/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+              .then(data => {
+                if(data.status === 401){
+                  location.replace("http://localhost:8080/auth/view/login")
+                }
+                else if (data.status === 200){
+                  location.replace("http://localhost:8080/api/books")
+                  console.log('Success:', data);
+                }
+              })
+              .catch((error) => {
+                console.error('Error:', error);
+              })
+    }
   }
 </script>

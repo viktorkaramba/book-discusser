@@ -80,6 +80,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		api.Static("/css", "./resources/css")
 		api.Static("/img", "./resources/img")
 		books := api.Group("/books")
+		books.Use(h.isLogin)
 		{
 			books.Static("/css", "./resources/css")
 			books.Static("/img", "./resources/img")
@@ -87,18 +88,24 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			books.GET("/", h.getAllBooks)
 			books.GET("/:id", h.getBookByUserId)
 			books.PUT("/:id", h.updateBook)
-			books.DELETE("/:id", h.deleteComment)
-
+			books.DELETE("/:id", h.deleteBook)
 		}
 		comments := api.Group("/comments")
+		comments.Use(h.isLogin)
 		{
 			comments.Static("/css", "./resources/css")
 			comments.Static("/img", "./resources/img")
 			comments.POST("/", h.createComment)
 			comments.GET("/", h.getAllComments)
-			comments.GET("/:id", h.getCommentByBookId)
 			comments.PUT("/:id", h.updateComment)
 			comments.DELETE("/:id", h.deleteComment)
+		}
+		bookComments := books.Group("/comments")
+		bookComments.Use(h.isLogin)
+		{
+			bookComments.Static("/css", "./resources/css")
+			bookComments.Static("/img", "./resources/img")
+			bookComments.GET("/:id", h.getCommentByBookId)
 		}
 		api.GET("/add-book", h.goForm)
 	}

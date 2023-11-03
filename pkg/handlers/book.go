@@ -31,10 +31,6 @@ func (h *Handler) createBook(c *gin.Context) {
 	})
 }
 
-type getAllBooksResponse struct {
-	Data []models.Book `json:"data"`
-}
-
 func (h *Handler) getAllBooks(c *gin.Context) {
 	role, err := getRole(c)
 	if err != nil {
@@ -108,7 +104,7 @@ func (h *Handler) deleteBook(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		//newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
 		return
 	}
 

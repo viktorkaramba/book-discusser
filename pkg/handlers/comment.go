@@ -45,13 +45,13 @@ func (h *Handler) getAllComments(c *gin.Context) {
 	})
 }
 
-type getAllUserCommentsResponse struct {
-	Data []models.UsersComments `json:"data"`
-}
-
 func (h *Handler) getCommentByBookId(c *gin.Context) {
 	userId, err := getUserId(c)
 	user, err := h.services.Authorization.GetUserById(userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusUnauthorized, "user not found")
+		return
+	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
@@ -64,8 +64,9 @@ func (h *Handler) getCommentByBookId(c *gin.Context) {
 	}
 	if user.Role == "ADMIN" {
 		c.HTML(http.StatusOK, "admin_comments_page.html", gin.H{
-			"title":   "Admin Comments Page",
-			"payload": comments,
+			"title":     "Admin Comments Page",
+			"userEmail": user.Email,
+			"payload":   comments,
 		})
 	} else {
 		c.HTML(http.StatusOK, "comment.html", gin.H{

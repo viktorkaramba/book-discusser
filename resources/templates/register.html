@@ -13,7 +13,7 @@
     <form method="dialog">
       <div class="field">
         <span class="fa fa-user"></span>
-        <input type="text"  id="name" required placeholder="Name">
+        <input type="text"  minlength="1" id="name" required placeholder="Name">
       </div>
       <div class="field space">
         <span class="fa fa-user"></span>
@@ -61,20 +61,22 @@
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const data = {name: name, email: email, password: password, role: "USER"};
-    fetch('http://localhost:8080/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-            .then(data => {
-              if(data.status === 200){
-                location.replace("http://localhost:8080/api/books");
-                console.log('Success:', data);
-              }
-            })
+    if(password.length > 7 && name.length > 0) {
+      const data = {name: name, email: email, password: password, role: "USER"};
+      fetch('http://localhost:8080/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+              .then(data => {
+                if (data.status === 200) {
+                  location.replace("http://localhost:8080/api/books");
+                  console.log('Success:', data);
+                }
+              })
+    }
   }
 </script>
 
